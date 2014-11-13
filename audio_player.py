@@ -55,7 +55,7 @@ def main():
 		ret, frame = cap.read()
 		ctr = 0
 		
-		if(ctr%1==0):
+		if(ctr%2==0):
 			skin = skinDetection(frame)
 			binSkin = cv2.cvtColor(skin,cv2.cv.CV_RGB2GRAY);
 			contours, hierarchy = cv2.findContours(binSkin,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
