@@ -26,9 +26,10 @@ def adjustAmplitude(data,ampScale):
 def skinDetection(src):
 	""" TODO optimize 
 		http://opencvpython.blogspot.com/2012/06/fast-array-manipulation-in-numpy.html
+		-Also fix this so its returning a grayscale
 	"""
 	cols, rows, dim = original_shape = tuple(src.shape)
-	dst = numpy.zeros(original_shape)
+	dst = src
 	for i in range(0,rows):
 		for j in range(0,cols):
 			B = src.item(j,i,0)
@@ -39,6 +40,10 @@ def skinDetection(src):
 				dst.itemset((j,i,0),255)
 				dst.itemset((j,i,1),255)
 				dst.itemset((j,i,2),255)
+			else:
+				dst.itemset((j,i,0),0)
+				dst.itemset((j,i,1),0)
+				dst.itemset((j,i,2),0)
 	return dst
 
 def main():	
@@ -48,19 +53,41 @@ def main():
 	while(True):
 		# Capture frame-by-frame
 		ret, frame = cap.read()
-		skin = skinDetection(frame)
-		contours, hierarchy = cv2.findContours(skin,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+		ctr = 0
 		
-		for h,cnt in enumerate(contours):
-			mask = numpy.zeros(imgray.shape,np.uint8)
-		cv2.drawContours(mask,[cnt],0,255,-1)
-		mean = cv2.mean(im,mask = mask)
+		if(ctr%1==0):
+			skin = skinDetection(frame)
+			binSkin = cv2.cvtColor(skin,cv2.cv.CV_RGB2GRAY);
+			contours, hierarchy = cv2.findContours(binSkin,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+			
+			maxsize = 0
+			maxind = 0
+			boundrec = None
+			
+			for i in range(0, len(contours)):		
+				area = cv2.contourArea(contours[i]);
+				if (area > maxsize):
+					maxsize = area;
+					maxind = i;
+					boundrec = cv2.boundingRect(contours[i]);
+					
+			# Draw contours
+			contour_output = numpy.zeros(frame.shape, dtype=numpy.uint8)
+			#Documentation for drawing contours: http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html?highlight=drawcontours#drawcontours
+			cv2.drawContours(contour_output, contours, maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, hierarchy);
+			cv2.drawContours(contour_output, contours, maxind, (0,0,255), 2, 8, hierarchy);
+			# // Documentation for drawing rectangle: http://docs.opencv.org/modules/core/doc/drawing_functions.html
+			print boundrec
+			cv2.rectangle(contour_output, (boundrec[0],boundrec[1]), (boundrec[2],boundrec[3]),(0,255,0),1, 8,0);
+			cv2.rectangle(contour_output, (0,0) , (100,100),(0,255,0),1, 8,0);
+				
+
 		
 		# # Our operations on the frame come here
 		# gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		
 		# Display the resulting frame
-		cv2.imshow('frame',skin)
+			cv2.imshow('frame',contour_output)
 		if cv2.waitKey(1) & 0xFF == ord('q'):
 			break
 
