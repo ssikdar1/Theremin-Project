@@ -86,7 +86,7 @@ def main():
 			#Documentation for drawing contours: http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html?highlight=drawcontours#drawcontours
 			cv2.drawContours(contour_output, contours, maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, hierarchy)
 			cv2.drawContours(contour_output, contours, maxind, (0,0,255), 2, 8, hierarchy)
-			cv2.drawContours(contour_output, contours, maxind2, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, hierarchy)
+			cv2.drawContours(contour_output, contours, maxind2, (255, 0, 0), cv2.cv.CV_FILLED, 8, hierarchy)
 			cv2.drawContours(contour_output, contours, maxind2, (0,0,255), 2, 8, hierarchy)
 			# // Documentation for drawing rectangle: http://docs.opencv.org/modules/core/doc/drawing_functions.html
 			cv2.rectangle(contour_output, (boundrec[0],boundrec[1]), (boundrec[0]  + boundrec[2], boundrec[1] + boundrec[3]),(0,255,0),1, 8,0);
