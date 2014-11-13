@@ -62,24 +62,35 @@ def main():
 			
 			maxsize = 0
 			maxind = 0
+			maxsize2 = 0
+			maxind2 = 0
 			boundrec = None
+			boundrec2 = None
 			
 			for i in range(0, len(contours)):		
 				area = cv2.contourArea(contours[i]);
 				if (area > maxsize):
-					maxsize = area;
-					maxind = i;
-					boundrec = cv2.boundingRect(contours[i]);
-					
+					maxsize2 = maxsize
+					maxind2 = maxind
+					boundrec2 = boundrec
+					maxsize = area
+					maxind = i
+					boundrec = cv2.boundingRect(contours[i])
+				else:
+					if(area > maxsize2):
+						maxsize2 = area
+						maxind = i
+						boundrec2 = cv2.boundingRect(contours[i])
 			# Draw contours
 			contour_output = numpy.zeros(frame.shape, dtype=numpy.uint8)
 			#Documentation for drawing contours: http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html?highlight=drawcontours#drawcontours
-			cv2.drawContours(contour_output, contours, maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, hierarchy);
-			cv2.drawContours(contour_output, contours, maxind, (0,0,255), 2, 8, hierarchy);
+			cv2.drawContours(contour_output, contours, maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, hierarchy)
+			cv2.drawContours(contour_output, contours, maxind, (0,0,255), 2, 8, hierarchy)
+			cv2.drawContours(contour_output, contours, maxind2, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, hierarchy)
+			cv2.drawContours(contour_output, contours, maxind2, (0,0,255), 2, 8, hierarchy)
 			# // Documentation for drawing rectangle: http://docs.opencv.org/modules/core/doc/drawing_functions.html
-			print boundrec
-			cv2.rectangle(contour_output, (boundrec[0],boundrec[1]), (boundrec[2],boundrec[3]),(0,255,0),1, 8,0);
-			cv2.rectangle(contour_output, (0,0) , (100,100),(0,255,0),1, 8,0);
+			cv2.rectangle(contour_output, (boundrec[0],boundrec[1]), (boundrec[0]  + boundrec[2], boundrec[1] + boundrec[3]),(0,255,0),1, 8,0);
+			cv2.rectangle(contour_output, (boundrec2[0],boundrec2[1]), (boundrec2[0]  + boundrec2[2], boundrec2[1] + boundrec2[3]),(0,255,0),1, 8,0);
 				
 
 		
