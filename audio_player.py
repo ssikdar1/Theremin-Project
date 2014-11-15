@@ -57,7 +57,8 @@ def adjustAmplitude(data,ampScale):
 	return data
 
 def createA440():
-	c eb f f# g a Bb C
+	
+	#c eb f f# g a Bb C
 	notes = [261.63,311.13,349.23,269.99,392.0,440.0,466.16,523.25]
 	numChannels = 1                      # mono
 	sampleWidth = 2                      # in bytes, a 16-bit short
@@ -132,70 +133,71 @@ def audio(input):
 	
 def main():	
 
-	input = createA440()
-	audio(input)
-	
-	cap = cv2.VideoCapture(0)
-	ret, frame0 = cap.read()
-	cols, rows, dim = original_shape = tuple(frame0.shape)
-	intervalSize = rows/8
-	
 	#if we wanted to get region
 	#floor(float(point.y)/intervalSize)
+	cap = cv2.VideoCapture(0)
 	
-	# while(True):
-		# # Capture frame-by-frame
-		# ret, frame = cap.read()
-		# # reflectImage(frame)
-		# ctr = 0
+	while(True):
+		# Capture frame-by-frame
+		ret, frame = cap.read()
+		# reflectImage(frame)
+		ctr = 0
 		
-		# if(ctr%2==0):
-			# skin = skinDetection(frame)
-			# # binSkin = cv2.cvtColor(skin,cv2.cv.CV_RGB2GRAY);
-			# contours, hierarchy = cv2.findContours(skin,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+		if(ctr%2==0):
+			cv2.line(frame,(320,0), (320,480), (255,255,255))
+			halves = numpy.hsplit(frame,2)
 			
-			# maxsize = 0
-			# maxind = 0
-			# maxsize2 = 0
-			# maxind2 = 0
-			# boundrec = None
-			# boundrec2 = None
+			skin = skinDetection(halves[0])
+			contours, hierarchy = cv2.findContours(skin,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 			
-			# for i in range(0, len(contours)):		
-				# area = cv2.contourArea(contours[i]);
-				# if (area > maxsize):
-					# maxsize2 = maxsize
-					# maxind2 = maxind
-					# boundrec2 = boundrec
-					# maxsize = area
-					# maxind = i
-					# boundrec = cv2.boundingRect(contours[i])
-				# else:
-					# if(area > maxsize2):
-						# maxsize2 = area
-						# maxind = i
-						# boundrec2 = cv2.boundingRect(contours[i])
-			# # Draw contours
-			# contour_output = numpy.zeros(frame.shape, dtype=numpy.uint8)
-			# #Documentation for drawing contours: http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html?highlight=drawcontours#drawcontours
-			# cv2.drawContours(contour_output, contours, maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, hierarchy)
-			# cv2.drawContours(contour_output, contours, maxind, (0,0,255), 2, 8, hierarchy)
-			# cv2.drawContours(contour_output, contours, maxind2, (255, 0, 0), cv2.cv.CV_FILLED, 8, hierarchy)
-			# cv2.drawContours(contour_output, contours, maxind2, (0,0,255), 2, 8, hierarchy)
-			# # // Documentation for drawing rectangle: http://docs.opencv.org/modules/core/doc/drawing_functions.html
-			# cv2.rectangle(contour_output, (boundrec[0],boundrec[1]), (boundrec[0]  + boundrec[2], boundrec[1] + boundrec[3]),(0,255,0),1, 8,0);
-			# cv2.rectangle(contour_output, (boundrec2[0],boundrec2[1]), (boundrec2[0]  + boundrec2[2], boundrec2[1] + boundrec2[3]),(0,255,0),1, 8,0);
-				
+			maxsize = 0
+			maxind = 0
+			maxsize2 = 0
+			maxind2 = 0
+			boundrec = None
+			boundrec2 = None
+			
+			for i in range(0, len(contours)):		
+				area = cv2.contourArea(contours[i]);
+				if (area > maxsize):
+					boundrec2 = boundrec
+					maxsize = area
+					maxind = i
+					boundrec = cv2.boundingRect(contours[i])
 
+			# Draw contours
+			contour_output = numpy.zeros(halves[0].shape, dtype=numpy.uint8)
+			#Documentation for drawing contours: http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html?highlight=drawcontours#drawcontours
+			cv2.drawContours(contour_output, contours, maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, hierarchy)
+			cv2.drawContours(contour_output, contours, maxind, (0,0,255), 2, 8, hierarchy)
+			
+			#get the centroid which is the first moment
+			moments = cv2.moments(contours[maxind])
+			centroid_x = int(moments['m10']/moments['m00'])
+			centroid_y = int(moments['m01']/moments['m00'])
+			print str(centroid_x) + " " + str(centroid_y)
+			
+			# // Documentation for drawing rectangle: http://docs.opencv.org/modules/core/doc/drawing_functions.html
+			try:
+				cv2.rectangle(contour_output, (boundrec[0],boundrec[1]), (boundrec[0]  + boundrec[2], boundrec[1] + boundrec[3]),(0,255,0),1, 8,0);
+				cv2.rectangle(contour_output, (boundrec2[0],boundrec2[1]), (boundrec2[0]  + boundrec2[2], boundrec2[1] + boundrec2[3]),(0,255,0),1, 8,0);
+				
+			except:
+				pass
+			
+			cv2.circle(contour_output,(centroid_x,centroid_y),5,(255,255,255),8)
+
+		# # Our operations on the frame come here
+		# gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		
-		# # # Our operations on the frame come here
-		# # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		
-		# # Display the resulting frame
-			# cv2.imshow('raw',frame)
-			# cv2.imshow('frame',contour_output)
-		# if cv2.waitKey(1) & 0xFF == ord('q'):
-			# break
+		# Display the resulting frame
+			# cv2.imshow('h1 right', halves[0])
+			cv2.imshow('h2', halves[1])
+			
+			cv2.imshow('raw',frame)
+			cv2.imshow('frame right',contour_output)
+		if cv2.waitKey(1) & 0xFF == ord('q'):
+			break
 
 
 	
