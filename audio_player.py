@@ -137,6 +137,8 @@ def main():
 	#floor(float(point.y)/intervalSize)
 	cap = cv2.VideoCapture(0)
 	
+	prevgray = None #used for optical flow
+	
 	while(True):
 		# Capture frame-by-frame
 		ret, frame = cap.read()
@@ -181,16 +183,31 @@ def main():
 			try:
 				cv2.rectangle(contour_output, (boundrec[0],boundrec[1]), (boundrec[0]  + boundrec[2], boundrec[1] + boundrec[3]),(0,255,0),1, 8,0);
 				cv2.rectangle(contour_output, (boundrec2[0],boundrec2[1]), (boundrec2[0]  + boundrec2[2], boundrec2[1] + boundrec2[3]),(0,255,0),1, 8,0);
-				
 			except:
 				pass
 			
 			cv2.circle(contour_output,(centroid_x,centroid_y),5,(255,255,255),8)
 
-		# # Our operations on the frame come here
-		# gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		
-		# Display the resulting frame
+			#
+			# Calculate Optical Flow for the left hand size
+			#call Farneback's optical flow algorithm
+			#Documentation: http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowfarneback
+			#Link to Farneback's paper: http://www.diva-portal.org/smash/get/diva2:273847/FULLTEXT01.pdf
+            # calcOpticalFlowFarneback(prevgray, gray, uflow, 0.5, 3, 15, 3, 5, 1.2, 0);
+
+			gray = cv2.cvtColor(halves[1], cv2.COLOR_BGR2GRAY);
+			
+			if(prevgray is not None):
+				uflow = cv2.calcOpticalFlowFarneback(prev, next, 0.5, 3, 15, 3, 5, 1.2, 0)
+				# cv2.cvtColor(prevgray, cflow, COLOR_GRAY2BGR);
+				# drawOptFlowMap(uflow, cflow, 16, Scalar(0, 255, 0));
+				# imshow("Optical Flow", cflow);
+        	
+			# swap(prevgray, gray);
+			prevgray = gray
+			
+			
+			# Display the resulting frame
 			# cv2.imshow('h1 right', halves[0])
 			cv2.imshow('h2', halves[1])
 			
