@@ -1,0 +1,31 @@
+
+def reflectImage(src):
+	"""
+	For my own sanity so my movements are not reversed when looking at a camera
+	"""	
+	# dst.create( image.size(), image.type() );
+	# map_x.create( image.size(), CV_32FC1 );
+	# map_y.create( image.size(), CV_32FC1 );
+		# for( int j = 0; j < image.rows; j++ )
+	# { 
+		# for( int i = 0; i < image.cols; i++ )
+		# {
+			# map_x.at<float>(j,i) = image.cols - i ;
+			# map_y.at<float>(j,i) = j ;
+		# } 
+	# }
+	cols, rows, dim = original_shape = tuple(src.shape)
+	map_x = numpy.empty( (cols,rows,1));
+	map_y = numpy.empty((cols,rows,1));
+
+	for j in range(0,rows):
+		for i in range(0,cols):
+			map_x.itemset((i,j,0),j)
+			map_y.itemset((i,j,0),i)
+
+	map_x_32 = map_x.astype('float32')
+	map_y_32 = map_y.astype('float32')
+	
+	dst = cv2.remap( src, map_x_32, map_y_32, cv2.cv.CV_INTER_LINEAR);
+	cv2.imshow('dst',dst)
+	cv2.waitKey(5)

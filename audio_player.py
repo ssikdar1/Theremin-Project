@@ -138,7 +138,10 @@ def main():
 	cap = cv2.VideoCapture(0)
 	
 	prevgray = None #used for optical flow
-	
+	ret0, frame0 = cap.read()
+	cols, rows, dim = original_shape = tuple(frame0.shape)
+	intervalSize = rows/10
+
 	while(True):
 		# Capture frame-by-frame
 		ret, frame = cap.read()
@@ -146,7 +149,18 @@ def main():
 		ctr = 0
 		
 		if(ctr%2==0):
+			#line splitting the frame in half
 			cv2.line(frame,(320,0), (320,480), (255,255,255))
+			
+			#lines spliting the right hand side into regions for the note values?
+			cv2.line(frame,(0,intervalSize), (320,intervalSize), (255,255,255))
+			cv2.line(frame,(0,intervalSize*2), (320,intervalSize*2), (255,255,255))
+			cv2.line(frame,(0,intervalSize*3), (320,intervalSize*3), (255,255,255))
+			cv2.line(frame,(0,intervalSize*4), (320,intervalSize*4), (255,255,255))
+			cv2.line(frame,(0,intervalSize*5), (320,intervalSize*5), (255,255,255))
+			cv2.line(frame,(0,intervalSize*6), (320,intervalSize*6), (255,255,255))
+			cv2.line(frame,(0,intervalSize*7), (320,intervalSize*7), (255,255,255))
+			cv2.line(frame,(0,intervalSize*8), (320,intervalSize*8), (255,255,255))
 			halves = numpy.hsplit(frame,2)
 			
 			skin = skinDetection(halves[0])
@@ -195,16 +209,16 @@ def main():
 			#Link to Farneback's paper: http://www.diva-portal.org/smash/get/diva2:273847/FULLTEXT01.pdf
             # calcOpticalFlowFarneback(prevgray, gray, uflow, 0.5, 3, 15, 3, 5, 1.2, 0);
 
-			gray = cv2.cvtColor(halves[1], cv2.COLOR_BGR2GRAY);
+			# gray = cv2.cvtColor(halves[1], cv2.COLOR_BGR2GRAY);
 			
-			if(prevgray is not None):
-				uflow = cv2.calcOpticalFlowFarneback(prev, next, 0.5, 3, 15, 3, 5, 1.2, 0)
-				# cv2.cvtColor(prevgray, cflow, COLOR_GRAY2BGR);
-				# drawOptFlowMap(uflow, cflow, 16, Scalar(0, 255, 0));
-				# imshow("Optical Flow", cflow);
+			# if(prevgray is not None):
+				# uflow = cv2.calcOpticalFlowFarneback(prev, next, 0.5, 3, 15, 3, 5, 1.2, 0)
+				# # cv2.cvtColor(prevgray, cflow, COLOR_GRAY2BGR);
+				# # drawOptFlowMap(uflow, cflow, 16, Scalar(0, 255, 0));
+				# # imshow("Optical Flow", cflow);
         	
-			# swap(prevgray, gray);
-			prevgray = gray
+			# # swap(prevgray, gray);
+			# prevgray = gray
 			
 			
 			# Display the resulting frame
