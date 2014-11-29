@@ -15,37 +15,6 @@ from math import sin,pi
 #for video
 import cv2
 
-def reflectImage(src):
-	"""
-	For my own sanity so my movements are not reversed when looking at a camera
-	"""	
-	# dst.create( image.size(), image.type() );
-	# map_x.create( image.size(), CV_32FC1 );
-	# map_y.create( image.size(), CV_32FC1 );
-		# for( int j = 0; j < image.rows; j++ )
-	# { 
-		# for( int i = 0; i < image.cols; i++ )
-		# {
-			# map_x.at<float>(j,i) = image.cols - i ;
-			# map_y.at<float>(j,i) = j ;
-		# }
-	# }
-	cols, rows, dim = original_shape = tuple(src.shape)
-	map_x = numpy.empty( (cols,rows,1));
-	map_y = numpy.empty((cols,rows,1));
-
-	for j in range(0,rows):
-		for i in range(0,cols):
-			map_x.itemset((i,j,0),j)
-			map_y.itemset((i,j,0),i)
-
-	map_x_32 = map_x.astype('float32')
-	map_y_32 = map_y.astype('float32')
-	
-	dst = cv2.remap( src, map_x_32, map_y_32, cv2.cv.CV_INTER_LINEAR);
-	cv2.imshow('dst',dst)
-	cv2.waitKey(5)
-
 def adjustAmplitude(data,ampScale):
 	""" get incoming audio data and adjust the amplitude by a certain factor """
 	data_array = numpy.fromstring(data, dtype='h')
@@ -131,6 +100,27 @@ def audio(input):
 
 	p.terminate()
 	
+def findLargestContour(contours):
+	maxsize = 0
+	maxind = 0
+	boundrec = None
+	
+	for i in range(0, len(contours)):		
+		area = cv2.contourArea(contours[i]);
+		if (area > maxsize):
+			boundrec2 = boundrec
+			maxsize = area
+			maxind = i
+			boundrec = cv2.boundingRect(contours[i])
+	return maxsize,maxind,boundrec
+
+def getCentroid(contours,maxind):
+	#get the centroid which is the first moment
+	moments = cv2.moments(contours[maxind])
+	centroid_x = int(moments['m10']/moments['m00'])
+	centroid_y = int(moments['m01']/moments['m00'])
+	return centroid_x, centroid_y
+	
 def main():	
 
 	#if we wanted to get region
@@ -152,56 +142,83 @@ def main():
 			#line splitting the frame in half
 			cv2.line(frame,(320,0), (320,480), (255,255,255))
 			
-			#lines spliting the right hand side into regions for the note values?
-			cv2.line(frame,(0,intervalSize), (320,intervalSize), (255,255,255))
-			cv2.line(frame,(0,intervalSize*2), (320,intervalSize*2), (255,255,255))
-			cv2.line(frame,(0,intervalSize*3), (320,intervalSize*3), (255,255,255))
-			cv2.line(frame,(0,intervalSize*4), (320,intervalSize*4), (255,255,255))
-			cv2.line(frame,(0,intervalSize*5), (320,intervalSize*5), (255,255,255))
-			cv2.line(frame,(0,intervalSize*6), (320,intervalSize*6), (255,255,255))
-			cv2.line(frame,(0,intervalSize*7), (320,intervalSize*7), (255,255,255))
-			cv2.line(frame,(0,intervalSize*8), (320,intervalSize*8), (255,255,255))
+
+			
 			halves = numpy.hsplit(frame,2)
+			cols, rows, dim = original_shape = tuple(frame.shape)
 			
-			skin = skinDetection(halves[0])
-			contours, hierarchy = cv2.findContours(skin,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+			vol_skin = skinDetection(halves[0])
 			
-			maxsize = 0
-			maxind = 0
-			maxsize2 = 0
-			maxind2 = 0
-			boundrec = None
-			boundrec2 = None
+			vol_contours, vol_hierarchy = cv2.findContours(numpy.copy(vol_skin),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+			vol_maxsize, vol_maxind, vol_boundrect = findLargestContour(vol_contours)
 			
-			for i in range(0, len(contours)):		
-				area = cv2.contourArea(contours[i]);
-				if (area > maxsize):
-					boundrec2 = boundrec
-					maxsize = area
-					maxind = i
-					boundrec = cv2.boundingRect(contours[i])
-
 			# Draw contours
-			contour_output = numpy.zeros(halves[0].shape, dtype=numpy.uint8)
-			#Documentation for drawing contours: http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html?highlight=drawcontours#drawcontours
-			cv2.drawContours(contour_output, contours, maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, hierarchy)
-			cv2.drawContours(contour_output, contours, maxind, (0,0,255), 2, 8, hierarchy)
+			vol_contour_output = numpy.zeros(halves[0].shape, dtype=numpy.uint8)
+			cv2.drawContours(vol_contour_output, vol_contours, vol_maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, vol_hierarchy)
+			cv2.drawContours(vol_contour_output, vol_contours, vol_maxind, (0,0,255), 2, 8, vol_hierarchy)
 			
-			#get the centroid which is the first moment
-			moments = cv2.moments(contours[maxind])
-			centroid_x = int(moments['m10']/moments['m00'])
-			centroid_y = int(moments['m01']/moments['m00'])
-			print str(centroid_x) + " " + str(centroid_y)
+			#get and draw centroid
+			# vol_centerX, vol_centerY =  getCentroid(vol_contours, vol_maxind)
+			# print str(vol_centerX) + " " + str(vol_centerY)
+			# cv2.circle(vol_contour_output,(vol_centerX,vol_centerY),5,(255,255,255),8)
+			# cv2.circle(halves[0],(vol_centerX,vol_centerY),5,(255,255,255),8)
 			
-			# // Documentation for drawing rectangle: http://docs.opencv.org/modules/core/doc/drawing_functions.html
-			try:
-				cv2.rectangle(contour_output, (boundrec[0],boundrec[1]), (boundrec[0]  + boundrec[2], boundrec[1] + boundrec[3]),(0,255,0),1, 8,0);
-				cv2.rectangle(contour_output, (boundrec2[0],boundrec2[1]), (boundrec2[0]  + boundrec2[2], boundrec2[1] + boundrec2[3]),(0,255,0),1, 8,0);
-			except:
-				pass
+			#show all volume images
+			cv2.imshow('volume raw',halves[0])
+			cv2.imshow('volume skin',vol_skin)
+			cv2.imshow('vol_contour_output',vol_contour_output)
 			
-			cv2.circle(contour_output,(centroid_x,centroid_y),5,(255,255,255),8)
+			
+			# pitch_skin = skinDetection(halves[1])
+			# cv2.imshow('hand raw',halves[1])
+			# cv2.imshow('hand skin',pitch_skin)
+			
+			
+			# # // Documentation for drawing rectangle: http://docs.opencv.org/modules/core/doc/drawing_functions.html
+			# try:
+				# cv2.rectangle(contour_output, (boundrec[0],boundrec[1]), (boundrec[0]  + boundrec[2], boundrec[1] + boundrec[3]),(0,255,0),1, 8,0);
+				# cv2.rectangle(contour_output, (boundrec2[0],boundrec2[1]), (boundrec2[0]  + boundrec2[2], boundrec2[1] + boundrec2[3]),(0,255,0),1, 8,0);
+			# except:
+				# pass
+			
+			# cv2.circle(contour_output,(centroid_x,centroid_y),5,(255,255,255),8)
+			# cv2.circle(frame,(centroid_x,centroid_y),5,(255,255,255),8)
 
+			# #
+			# # get Centroid of the Pitch Hand
+			# #
+			# skin2 = skinDetection(halves[1])
+			
+			# contours1, hierarchy1 = cv2.findContours(skin2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)		
+			# maxsize1 = 0
+			# maxind1 = 0
+			# boundrec1 = None
+			
+			# for i in range(0, len(contours1)):		
+				# area = cv2.contourArea(contours1[i]);
+				# if (area > maxsize1):
+					# maxsize = area
+					# maxind1 = i
+					# boundrec1 = cv2.boundingRect(contours1[i])
+
+			# # Draw contours
+			# contour_output1 = numpy.zeros(halves[1].shape, dtype=numpy.uint8)
+			# #Documentation for drawing contours: http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html?highlight=drawcontours#drawcontours
+			# cv2.drawContours(contour_output1, contours1, maxind1, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, hierarchy1)
+			# cv2.drawContours(contour_output1, contours1, maxind1, (0,0,255), 2, 8, hierarchy1)					
+			
+			# #get the centroid which is the first moment
+			# moments1 = cv2.moments(contours1[maxind1])
+			# centroid_x1 = int(moments1['m10']/moments1['m00'])
+			# centroid_y1 = int(moments1['m01']/moments1['m00'])
+			
+			# cv2.circle(frame,(centroid_x1+320,centroid_y1),5,(255,255,255),8)
+			
+			# cv2.imshow("volume hand", contour_output1)
+			# cv2.imshow("volume hand skin", skin2)
+			# cv2.imshow("volume hand contours ", halves[1])
+			
+			
 			#
 			# Calculate Optical Flow for the left hand size
 			#call Farneback's optical flow algorithm
@@ -223,10 +240,19 @@ def main():
 			
 			# Display the resulting frame
 			# cv2.imshow('h1 right', halves[0])
-			cv2.imshow('h2', halves[1])
+			# cv2.imshow('h2', halves[1])
 			
-			cv2.imshow('raw',frame)
-			cv2.imshow('frame right',contour_output)
+			# cv2.imshow('raw',frame)
+			# cv2.imshow('frame right',contour_output)
+		lines spliting the right hand side into regions for the note values?
+		cv2.line(frame,(0,intervalSize), (320,intervalSize), (255,255,255))
+		cv2.line(frame,(0,intervalSize*2), (320,intervalSize*2), (255,255,255))
+		cv2.line(frame,(0,intervalSize*3), (320,intervalSize*3), (255,255,255))
+		cv2.line(frame,(0,intervalSize*4), (320,intervalSize*4), (255,255,255))
+		cv2.line(frame,(0,intervalSize*5), (320,intervalSize*5), (255,255,255))
+		cv2.line(frame,(0,intervalSize*6), (320,intervalSize*6), (255,255,255))
+		cv2.line(frame,(0,intervalSize*7), (320,intervalSize*7), (255,255,255))
+		cv2.line(frame,(0,intervalSize*8), (320,intervalSize*8), (255,255,255))
 		if cv2.waitKey(1) & 0xFF == ord('q'):
 			break
 
