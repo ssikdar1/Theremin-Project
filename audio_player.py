@@ -10,7 +10,7 @@ import sys
 from struct import pack           # This creates the binary data structure for frames
 import numpy
 import array
-from math import sin,pi
+from math import sin,pi,log10
 
 #for video
 import cv2
@@ -31,7 +31,8 @@ def createA440():
 	notes = [261.63,311.13,349.23,269.99,392.0,440.0,466.16,523.25]
 	numChannels = 1                      # mono
 	sampleWidth = 2                      # in bytes, a 16-bit short
-	sampleRate = 44100
+	# sampleRate = 44100
+	sampleRate = 44100/4				#downsampling 
 	# MAX_AMP = 2**(8*sampleWidth - 1) - 1 #maximum amplitude is 2**15 - 1  = 32767 
 	MAX_AMP = 2**(8*sampleWidth - 1) - 1 #maximum amplitude is 2**15 - 1  = 32767 
 	lengthSeconds = .4                 
@@ -151,54 +152,58 @@ def main():
 			
 			halves = numpy.hsplit(frame,2)
 			
-			# # VOLUME HAND
-			# #
-			vol_skin = skinDetection(halves[0])
+			# # # # VOLUME HAND
+			# # # #
+			# vol_skin = skinDetection(halves[0])
 			
-			vol_contours, vol_hierarchy = cv2.findContours(numpy.copy(vol_skin),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-			vol_maxsize, vol_maxind, vol_boundrect = findLargestContour(vol_contours)
+			# vol_contours, vol_hierarchy = cv2.findContours(numpy.copy(vol_skin),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+			# vol_maxsize, vol_maxind, vol_boundrect = findLargestContour(vol_contours)
 			
-			# Draw contours
-			vol_contour_output = numpy.zeros(halves[0].shape, dtype=numpy.uint8)
-			# cv2.drawContours(vol_contour_output, vol_contours, vol_maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, vol_hierarchy)
-			# cv2.drawContours(vol_contour_output, vol_contours, vol_maxind, (0,0,255), 2, 8, vol_hierarchy)
+			# # Draw contours
+			# vol_contour_output = numpy.zeros(halves[0].shape, dtype=numpy.uint8)
+			# # cv2.drawContours(vol_contour_output, vol_contours, vol_maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, vol_hierarchy)
+			# # cv2.drawContours(vol_contour_output, vol_contours, vol_maxind, (0,0,255), 2, 8, vol_hierarchy)
 			
-			#get and draw centroid
-			vol_centerX, vol_centerY =  getCentroid(vol_contours, vol_maxind)
-			# cv2.circle(vol_contour_output,(vol_centerX,vol_centerY),5,(255,255,255),8)
-			cv2.circle(halves[0],(vol_centerX,vol_centerY),5,(255,255,255),8)
+			# #get and draw centroid
+			# vol_centerX, vol_centerY =  getCentroid(vol_contours, vol_maxind)
+			# # cv2.circle(vol_contour_output,(vol_centerX,vol_centerY),5,(255,255,255),8)
+			# cv2.circle(halves[0],(vol_centerX,vol_centerY),5,(255,255,255),8)
 			
-			#show all volume images
-			cv2.imshow('volume raw',halves[0])
-			# cv2.imshow('volume skin',vol_skin)
-			# cv2.imshow('vol_contour_output',vol_contour_output)
+			# #show all volume images
+			# cv2.imshow('volume raw',halves[0])
+			# # cv2.imshow('volume skin',vol_skin)
+			# # cv2.imshow('vol_contour_output',vol_contour_output)
 					
-			scale = 5**(float(vol_centerY)/1000.0)
-			# print scale
-			if 1.0/scale > 1:
-				scale = 1
-			print ('1/scale',1.0/scale)
-			input = adjustAmplitude(input,1.0/scale)
+			# # scale = 5**(float(vol_centerY)/1000.0)
+			# # scale = 10*log10(float(rows)/vol_centerY)
+			# #1/e^x
 			
-			stream.write(input)
+			# #
+			# # TODO: Ask snyder if this is a good enough way to do it
+			# #
+			# scale = log10(10*log10(float(rows)/vol_centerY))
+			# print scale
+			# ret = adjustAmplitude(numpy.copy(input),scale-.3)
+			
+			# stream.write(ret)
 			
 			
 			######################################################
 			######################################################
 			#####################################################
 			
-			# #
-			# # PITCH HAND
-			# #
+			#
+			# PITCH HAND
+			#
 			
 
-			# # OPTICAL FLOW
+			# OPTICAL FLOW
 								
-			# # Calculate Optical Flow for the left hand size
-			# # call Farneback's optical flow algorithm
-			# # Documentation: http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowfarneback
-			# # Link to Farneback's paper: http://www.diva-portal.org/smash/get/diva2:273847/FULLTEXT01.pdf
-            # # calcOpticalFlowFarneback(prevgray, gray, uflow, 0.5, 3, 15, 3, 5, 1.2, 0);
+			# Calculate Optical Flow for the left hand size
+			# call Farneback's optical flow algorithm
+			# Documentation: http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowfarneback
+			# Link to Farneback's paper: http://www.diva-portal.org/smash/get/diva2:273847/FULLTEXT01.pdf
+            # calcOpticalFlowFarneback(prevgray, gray, uflow, 0.5, 3, 15, 3, 5, 1.2, 0);
 
 			# gray = cv2.cvtColor(halves[1], cv2.COLOR_BGR2GRAY);
 			# optFlowMap = gray
@@ -212,7 +217,7 @@ def main():
 				# cflow = cv2.cvtColor(prevgray, cv2.COLOR_GRAY2BGR);
 				# optFlowMap = drawOptFlowMap(flow, cflow, 16, (0, 255, 0));
 				
-
+				# cv2.imshow('flow map',optFlowMap)
 				# #get norm of matrix
 				# # print flow.shape
 				
@@ -272,9 +277,7 @@ def main():
 			# cv2.circle(optFlowMap,(pitch_centroid_x,pitch_centroid_y),5,(255,255,255),8)
 			# cv2.imshow("Optical Flow Map", optFlowMap);
 
-	
-
-		
+			
 		# lines spliting the right hand side into regions for the note values?
 		# cv2.line(frame,(0,intervalSize), (320,intervalSize), (255,255,255))
 		# cv2.line(frame,(0,intervalSize*2), (320,intervalSize*2), (255,255,255))
