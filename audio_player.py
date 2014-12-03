@@ -26,7 +26,7 @@ def adjustAmplitude(data,ampScale):
 
 	return data
 
-def createA440():
+def createA440(epsilon):
 	
 	#c eb f f# g a Bb C
 	notes = [261.63,311.13,349.23,269.99,392.0,440.0,466.16,523.25]
@@ -36,7 +36,7 @@ def createA440():
 	sampleRate = 44100/4				#downsampling 
 	# MAX_AMP = 2**(8*sampleWidth - 1) - 1 #maximum amplitude is 2**15 - 1  = 32767 
 	MAX_AMP = 2**(8*sampleWidth - 1) - 1 #maximum amplitude is 2**15 - 1  = 32767 
-	lengthSeconds = .4                 
+	lengthSeconds = 30
 	numSamples = int(sampleRate * lengthSeconds)
 	data = array.array("h")
 
@@ -45,9 +45,11 @@ def createA440():
 		#  2 * pi * frequency is the angular velocity in radians/sec
 		#  multiplying this by i / sampleRate incrementally creates angle at each sample
 		#  and then sin ( angle ) => amplitude at this sample
-
-		sample = (MAX_AMP) * sin( 2 * pi * 440.0 * i / sampleRate ) 
-
+		if(i%2 == 0):
+			sample = (MAX_AMP) * sin( 2 * pi * (440.0) * i / sampleRate ) 
+		else:
+			sample = (MAX_AMP) * sin( 2 * pi * (440.0 + epsilon) * i / sampleRate ) 
+			
 		data.append( int( sample ) )
 
 	data_array = numpy.fromstring(data, dtype='h')
@@ -141,7 +143,7 @@ def main():
 
 					
 	ctr = 0
-	input = createA440()
+	input = createA440(epsilon=0)
 	
 	optFlowMap = numpy.zeros((cols/2, rows/2, dim),dtype=numpy.uint8)
 	
@@ -244,34 +246,21 @@ def main():
 				cflow = cv2.cvtColor(prevgray, cv2.COLOR_GRAY2BGR);
 				optFlowMap = drawOptFlowMap(flow, cflow, 16, (0, 255, 0));
 				
-				# cv2.imshow('flow map',optFlowMap)
-				#get norm of matrix
-				# print flow.shape
-				
-				# threshold = 3
-				# if(numpy.linalg.norm(flow[0], 1) > threshold or numpy.linalg.norm(flow[1], 1) > threshold):
-					# print 'go yes hi'
-					# print(numpy.linalg.norm(flow[0], 1),numpy.linalg.norm(flow[1], 1))
-					# print ('sum',numpy.matrix(flow[0][0]))
-				
 				
 				print datetime.datetime.now()
-				print numpy.linalg.norm(numpy.sqrt((flow**2).sum(axis=-1)),1)
-				# r,c,d = flow.shape 
-				# flowprime = numpy.zeros((r,c),flow.dtype)
-				# for i in range(0,r):
-					# for j in range (0,c):
-						# flowprime[i,j] = numpy.linalg.norm(flow[i,j], 2)
-				# # print flowprime.shape
-				
-				# print(numpy.linalg.norm(flowprime, 1))
-				#print ('sum',numpy.matrix(flow[0]))
-				
+				val = numpy.linalg.norm(numpy.sqrt((flow**2).sum(axis=-1)),1)
+				if val > 1000.0:
+					print 'note bend'
+				else:
+					val = 0
+					print 'not bend'
+								
+				music = createA440(epsilon=val)
+				stream.write(music)	
+
 			# swap(prevgray, gray);
 			prevgray = gray
-						
 
-			
 			
 			# // Documentation for drawing rectangle: http://docs.opencv.org/modules/core/doc/drawing_functions.html
 			# try:
@@ -279,10 +268,7 @@ def main():
 				# cv2.rectangle(pitch_contour_output, (boundrec2[0],boundrec2[1]), (boundrec2[0]  + boundrec2[2], boundrec2[1] + boundrec2[3]),(0,255,0),1, 8,0);
 			# except:
 				# pass
-						
-
-							
-			
+					
 			#get the centroid which is the first moment
 			# pitch_moments = cv2.moments(pitch_contours[pitch_maxind])
 			# pitch_centroid_x = int(pitch_moments['m10']/pitch_moments['m00'])
