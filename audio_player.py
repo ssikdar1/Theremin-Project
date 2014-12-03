@@ -11,6 +11,7 @@ from struct import pack           # This creates the binary data structure for f
 import numpy
 import array
 from math import sin,pi,log10
+import datetime
 
 #for video
 import cv2
@@ -141,6 +142,9 @@ def main():
 					
 	ctr = 0
 	input = createA440()
+	
+	optFlowMap = numpy.zeros((cols/2, rows/2, dim),dtype=numpy.uint8)
+	
 	while(True):
 		# Capture frame-by-frame
 		ret, frame = cap.read()
@@ -204,78 +208,88 @@ def main():
 			# Documentation: http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowfarneback
 			# Link to Farneback's paper: http://www.diva-portal.org/smash/get/diva2:273847/FULLTEXT01.pdf
             # calcOpticalFlowFarneback(prevgray, gray, uflow, 0.5, 3, 15, 3, 5, 1.2, 0);
-
-			# gray = cv2.cvtColor(halves[1], cv2.COLOR_BGR2GRAY);
-			# optFlowMap = gray
+			pitch_skin = skinDetection(halves[1])
+			pitch_contour_output = numpy.zeros(halves[1].shape, dtype=numpy.uint8)
 			
-			# if(prevgray is not None):
-				# #FRAME DIFFERENCING
-				# diff = cv2.absdiff(gray,prevgray)
+			pitch_contours, pitch_hierarchy = cv2.findContours(pitch_skin,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)		
+			pitch_maxsize = 0
+			pitch_maxind = 0
+			pitch_boundrec = None
+			
+			
+			
+			for i in range(0, len(pitch_contours)):		
+				area = cv2.contourArea(pitch_contours[i]);
+				if (area > pitch_maxsize):
+					pitch_maxsize = area
+					pitch_maxind = i
+					pitch_boundrec = cv2.boundingRect(pitch_contours[i])
+
+			#Documentation for drawing contours: http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html?highlight=drawcontours#drawcontours
+			cv2.drawContours(pitch_contour_output, pitch_contours, pitch_maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, pitch_hierarchy)
+			cv2.drawContours(pitch_contour_output, pitch_contours, pitch_maxind, (0,0,255), 2, 8, pitch_hierarchy)	
+			
+			
+			blur = cv2.GaussianBlur(pitch_contour_output ,(5,5),10)
+			gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY);
+			#gray = blur
+			
+			
+			if(prevgray is not None):
+				#FRAME DIFFERENCING
 				
-				# flow = cv2.calcOpticalFlowFarneback(prevgray, gray, 0.5, 3, 15, 3, 5, 1.2, 0)
-				# # flow = cv2.calcOpticalFlowFarneback(prevgray, diff, 0.5, 3, 15, 3, 5, 1.2, 0)
-				# cflow = cv2.cvtColor(prevgray, cv2.COLOR_GRAY2BGR);
-				# optFlowMap = drawOptFlowMap(flow, cflow, 16, (0, 255, 0));
+				
+				flow = cv2.calcOpticalFlowFarneback(prevgray, gray, 0.5, 3, 15, 3, 5, 1.2, 0)
+				# flow = cv2.calcOpticalFlowFarneback(prevgray, diff, 0.5, 3, 15, 3, 5, 1.2, 0)
+				cflow = cv2.cvtColor(prevgray, cv2.COLOR_GRAY2BGR);
+				optFlowMap = drawOptFlowMap(flow, cflow, 16, (0, 255, 0));
 				
 				# cv2.imshow('flow map',optFlowMap)
-				# #get norm of matrix
-				# # print flow.shape
+				#get norm of matrix
+				# print flow.shape
 				
-				# threshold = .006
+				# threshold = 3
 				# if(numpy.linalg.norm(flow[0], 1) > threshold or numpy.linalg.norm(flow[1], 1) > threshold):
 					# print 'go yes hi'
 					# print(numpy.linalg.norm(flow[0], 1),numpy.linalg.norm(flow[1], 1))
 					# print ('sum',numpy.matrix(flow[0][0]))
-			
-			# # swap(prevgray, gray);
-			# prevgray = gray
+				
+				
+				print datetime.datetime.now()
+				print numpy.linalg.norm(numpy.sqrt((flow**2).sum(axis=-1)),1)
+				# r,c,d = flow.shape 
+				# flowprime = numpy.zeros((r,c),flow.dtype)
+				# for i in range(0,r):
+					# for j in range (0,c):
+						# flowprime[i,j] = numpy.linalg.norm(flow[i,j], 2)
+				# # print flowprime.shape
+				
+				# print(numpy.linalg.norm(flowprime, 1))
+				#print ('sum',numpy.matrix(flow[0]))
+				
+			# swap(prevgray, gray);
+			prevgray = gray
 						
-			
-			
-			# pitch_skin = skinDetection(halves[1])
-			# # cv2.imshow('hand raw',halves[1])
-			# # cv2.imshow('hand skin',pitch_skin)
-			
-			# pitch_contour_output = numpy.zeros(halves[1].shape, dtype=numpy.uint8)
-			
-			# # // Documentation for drawing rectangle: http://docs.opencv.org/modules/core/doc/drawing_functions.html
-			# # try:
-				# # cv2.rectangle(pitch_contour_output, (boundrec[0],boundrec[1]), (boundrec[0]  + boundrec[2], boundrec[1] + boundrec[3]),(0,255,0),1, 8,0);
-				# # cv2.rectangle(pitch_contour_output, (boundrec2[0],boundrec2[1]), (boundrec2[0]  + boundrec2[2], boundrec2[1] + boundrec2[3]),(0,255,0),1, 8,0);
-			# # except:
-				# # pass
-			
-			# # cv2.circle(pitch_contour_output,(centroid_x,centroid_y),5,(255,255,255),8)
-			# # cv2.circle(frame,(centroid_x,centroid_y),5,(255,255,255),8)
 
 			
-			# pitch_contours, pitch_hierarchy = cv2.findContours(pitch_skin,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)		
-			# pitch_maxsize = 0
-			# pitch_maxind = 0
-			# pitch_boundrec = None
 			
-			# for i in range(0, len(pitch_contours)):		
-				# area = cv2.contourArea(pitch_contours[i]);
-				# if (area > pitch_maxsize):
-					# pitch_maxsize = area
-					# pitch_maxind = i
-					# pitch_boundrec = cv2.boundingRect(pitch_contours[i])
+			# // Documentation for drawing rectangle: http://docs.opencv.org/modules/core/doc/drawing_functions.html
+			# try:
+				# cv2.rectangle(pitch_contour_output, (boundrec[0],boundrec[1]), (boundrec[0]  + boundrec[2], boundrec[1] + boundrec[3]),(0,255,0),1, 8,0);
+				# cv2.rectangle(pitch_contour_output, (boundrec2[0],boundrec2[1]), (boundrec2[0]  + boundrec2[2], boundrec2[1] + boundrec2[3]),(0,255,0),1, 8,0);
+			# except:
+				# pass
+						
 
-			# #Documentation for drawing contours: http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html?highlight=drawcontours#drawcontours
-			# cv2.drawContours(pitch_contour_output, pitch_contours, pitch_maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, pitch_hierarchy)
-			# cv2.drawContours(pitch_contour_output, pitch_contours, pitch_maxind, (0,0,255), 2, 8, pitch_hierarchy)					
+							
 			
-			# #get the centroid which is the first moment
+			#get the centroid which is the first moment
 			# pitch_moments = cv2.moments(pitch_contours[pitch_maxind])
 			# pitch_centroid_x = int(pitch_moments['m10']/pitch_moments['m00'])
 			# pitch_centroid_y = int(pitch_moments['m01']/pitch_moments['m00'])
-			
-			# # cv2.circle(frame,(centroid_x1+320,centroid_y1),5,(255,255,255),8)
-			
-			# cv2.imshow("pitch hand contour", pitch_contour_output)
-			
+									
 			# cv2.circle(optFlowMap,(pitch_centroid_x,pitch_centroid_y),5,(255,255,255),8)
-			# cv2.imshow("Optical Flow Map", optFlowMap);
+			cv2.imshow("Optical Flow Map", optFlowMap);
 
 			
 		# lines spliting the right hand side into regions for the note values?
