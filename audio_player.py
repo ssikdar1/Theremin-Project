@@ -26,7 +26,7 @@ def adjustAmplitude(data,ampScale):
 
 	return data
 
-def createA440(epsilon):
+def createA440(epsilon, note):
 	
 	#c eb f f# g a Bb C
 	notes = [261.63,311.13,349.23,269.99,392.0,440.0,466.16,523.25]
@@ -36,7 +36,7 @@ def createA440(epsilon):
 	sampleRate = 44100/4				#downsampling 
 	# MAX_AMP = 2**(8*sampleWidth - 1) - 1 #maximum amplitude is 2**15 - 1  = 32767 
 	MAX_AMP = 2**(8*sampleWidth - 1) - 1 #maximum amplitude is 2**15 - 1  = 32767 
-	lengthSeconds = 30
+	lengthSeconds = 1           
 	numSamples = int(sampleRate * lengthSeconds)
 	data = array.array("h")
 
@@ -45,11 +45,17 @@ def createA440(epsilon):
 		#  2 * pi * frequency is the angular velocity in radians/sec
 		#  multiplying this by i / sampleRate incrementally creates angle at each sample
 		#  and then sin ( angle ) => amplitude at this sample
+		"""
 		if(i%2 == 0):
 			sample = (MAX_AMP) * sin( 2 * pi * (440.0) * i / sampleRate ) 
 		else:
 			sample = (MAX_AMP) * sin( 2 * pi * (440.0 + epsilon) * i / sampleRate ) 
-			
+		"""
+		
+		LFO = sin(2 * pi * .5 * i / sampleRate)
+		sample = (MAX_AMP) * sin((2 * pi * (notes[note]) * i / sampleRate) + (epsilon/500) * LFO)
+		#sample = (MAX_AMP) * sin(2 * pi * (440.0 ) * i / sampleRate)
+		
 		data.append( int( sample ) )
 
 	data_array = numpy.fromstring(data, dtype='h')
@@ -143,7 +149,7 @@ def main():
 
 					
 	ctr = 0
-	input = createA440(epsilon=0)
+	input = createA440(epsilon=0,note=0)
 	
 	optFlowMap = numpy.zeros((cols/2, rows/2, dim),dtype=numpy.uint8)
 	
@@ -158,135 +164,191 @@ def main():
 			
 			halves = numpy.hsplit(frame,2)
 			
-			# # # # VOLUME HAND
-			# # # #
-			# vol_skin = skinDetection(halves[0])
+			# # # VOLUME HAND
+			# # #
+			vol_skin = skinDetection(halves[0])
 			
-			# vol_contours, vol_hierarchy = cv2.findContours(numpy.copy(vol_skin),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-			# vol_maxsize, vol_maxind, vol_boundrect = findLargestContour(vol_contours)
+			vol_contours, vol_hierarchy = cv2.findContours(numpy.copy(vol_skin),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+			vol_maxsize, vol_maxind, vol_boundrect = findLargestContour(vol_contours)
 			
-			# # Draw contours
-			# vol_contour_output = numpy.zeros(halves[0].shape, dtype=numpy.uint8)
-			# # cv2.drawContours(vol_contour_output, vol_contours, vol_maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, vol_hierarchy)
-			# # cv2.drawContours(vol_contour_output, vol_contours, vol_maxind, (0,0,255), 2, 8, vol_hierarchy)
+			# Draw contours
+			vol_contour_output = numpy.zeros(halves[0].shape, dtype=numpy.uint8)
+			# cv2.drawContours(vol_contour_output, vol_contours, vol_maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, vol_hierarchy)
+			# cv2.drawContours(vol_contour_output, vol_contours, vol_maxind, (0,0,255), 2, 8, vol_hierarchy)
 			
-			# #get and draw centroid
-			# vol_centerX, vol_centerY =  getCentroid(vol_contours, vol_maxind)
-			# # cv2.circle(vol_contour_output,(vol_centerX,vol_centerY),5,(255,255,255),8)
-			# cv2.circle(halves[0],(vol_centerX,vol_centerY),5,(255,255,255),8)
+			#get and draw centroid
+			vol_centerX, vol_centerY =  getCentroid(vol_contours, vol_maxind)
+			# cv2.circle(vol_contour_output,(vol_centerX,vol_centerY),5,(255,255,255),8)
+			cv2.circle(halves[0],(vol_centerX,vol_centerY),5,(255,255,255),8)
 			
-			# #show all volume images
-			# cv2.imshow('volume raw',halves[0])
-			# # cv2.imshow('volume skin',vol_skin)
-			# # cv2.imshow('vol_contour_output',vol_contour_output)
+			#
+			#Convex Hull for Scale change
+			#
+			
+			# #create the hull points
+			# hull = cv2.convexHull(vol_contours[vol_maxind])
+			# for pt in hull:
+				# cv2.circle(halves[0],(pt[0][0],pt[0][1]),5,(220,0,110),8)
+			# # (x,y),radius = cv2.minEnclosingCircle(vol_contours[vol_maxind])
+			# # center = (int(x),int(y))
+			# # radius = int(radius)
+			# # cv2.circle(halves[0],center,radius,(0,255,0),2)
+			
+			# cnt = vol_contours[vol_maxind]
+			# hull = cv2.convexHull(cnt,returnPoints = False)
+			# defects = cv2.convexityDefects(cnt,hull)
+			
+			# mind=0
+			# maxd=0
+			# i=0
+			# # print vol_contours
+			# tmpcontour = numpy.zeros(cnt.shape)
+			# for i in range(defects.shape[0]):
+				# s,e,f,d = defects[i,0]
+				# start = tuple(cnt[s][0])
+				# end = tuple(cnt[e][0])
+				# far = tuple(cnt[f][0])
+				# # numpy.append(tmpcontour,[[start,end]],axis=0)
+				# # dist = cv2.pointPolygonTest(cnt,centr,True)
+				# cv2.line(halves[0],start,end,[0,255,0],2)                
+				# cv2.circle(halves[0],far,5,[0,0,255],-1)
+			# # print defects.shape[0]
+			
+			
+				
+			# defects = cv2.convexityDefects(vol_contours[vol_maxind],cv2.convexHull(vol_contours[vol_maxind],returnPoints = False))
+			# print defects
+			# for i in range(defects.shape[0]):
+				# s,e,f,d = defects[i,0]
+				# start = tuple(vol_contours[s][0])
+				# end = tuple(vol_contours[e][0])
+				# far = tuple(vol_contours[f][0])
+				# cv2.line(halves[0],start,end,[0,255,0],2)
+				# cv2.circle(halves[0],far,5,[0,0,255],-1)
+			
+			#show all volume images
+			cv2.imshow('volume raw',halves[0])
+			# cv2.imshow('volume skin',vol_skin)
+			# cv2.imshow('vol_contour_output',vol_contour_output)
 					
-			# # scale = 5**(float(vol_centerY)/1000.0)
-			# # scale = 10*log10(float(rows)/vol_centerY)
-			# #1/e^x
+			# scale = 5**(float(vol_centerY)/1000.0)
+			# scale = 10*log10(float(rows)/vol_centerY)
+			#1/e^x
 			
-			# #
-			# # TODO: Ask snyder if this is a good enough way to do it
-			# #
-			# scale = log10(10*log10(float(rows)/vol_centerY))
-			# print scale
-			# ret = adjustAmplitude(numpy.copy(input),scale-.3)
+			#
+			# TODO: Ask snyder if this is a good enough way to do it
+			#
+			scale = log10(10*log10(float(rows)/vol_centerY))
+			print scale
+			ret = adjustAmplitude(numpy.copy(input),scale-.3)
 			
-			# stream.write(ret)
+			stream.write(ret)
 			
 			
 			######################################################
 			######################################################
 			#####################################################
 			
-			#
-			# PITCH HAND
-			#
+			# #
+			# # PITCH HAND
+			# #
 			
 
-			# OPTICAL FLOW
+			# # OPTICAL FLOW
 								
-			# Calculate Optical Flow for the left hand size
-			# call Farneback's optical flow algorithm
-			# Documentation: http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowfarneback
-			# Link to Farneback's paper: http://www.diva-portal.org/smash/get/diva2:273847/FULLTEXT01.pdf
-            # calcOpticalFlowFarneback(prevgray, gray, uflow, 0.5, 3, 15, 3, 5, 1.2, 0);
-			pitch_skin = skinDetection(halves[1])
-			pitch_contour_output = numpy.zeros(halves[1].shape, dtype=numpy.uint8)
+			# # Calculate Optical Flow for the left hand size
+			# # call Farneback's optical flow algorithm
+			# # Documentation: http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowfarneback
+			# # Link to Farneback's paper: http://www.diva-portal.org/smash/get/diva2:273847/FULLTEXT01.pdf
+            # # calcOpticalFlowFarneback(prevgray, gray, uflow, 0.5, 3, 15, 3, 5, 1.2, 0);
+			# pitch_skin = skinDetection(halves[1])
+			# pitch_contour_output = numpy.zeros(halves[1].shape, dtype=numpy.uint8)
 			
-			pitch_contours, pitch_hierarchy = cv2.findContours(pitch_skin,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)		
-			pitch_maxsize = 0
-			pitch_maxind = 0
-			pitch_boundrec = None
+			# pitch_contours, pitch_hierarchy = cv2.findContours(pitch_skin,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)		
+			# pitch_maxsize = 0
+			# pitch_maxind = 0
+			# pitch_boundrec = None
 			
 			
 			
-			for i in range(0, len(pitch_contours)):		
-				area = cv2.contourArea(pitch_contours[i]);
-				if (area > pitch_maxsize):
-					pitch_maxsize = area
-					pitch_maxind = i
-					pitch_boundrec = cv2.boundingRect(pitch_contours[i])
+			# for i in range(0, len(pitch_contours)):		
+				# area = cv2.contourArea(pitch_contours[i]);
+				# if (area > pitch_maxsize):
+					# pitch_maxsize = area
+					# pitch_maxind = i
+					# pitch_boundrec = cv2.boundingRect(pitch_contours[i])
 
-			#Documentation for drawing contours: http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html?highlight=drawcontours#drawcontours
-			cv2.drawContours(pitch_contour_output, pitch_contours, pitch_maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, pitch_hierarchy)
-			cv2.drawContours(pitch_contour_output, pitch_contours, pitch_maxind, (0,0,255), 2, 8, pitch_hierarchy)	
+			# #Documentation for drawing contours: http://docs.opencv.org/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html?highlight=drawcontours#drawcontours
+			# cv2.drawContours(pitch_contour_output, pitch_contours, pitch_maxind, 	(255, 0, 0), cv2.cv.CV_FILLED, 8, pitch_hierarchy)
+			# cv2.drawContours(pitch_contour_output, pitch_contours, pitch_maxind, (0,0,255), 2, 8, pitch_hierarchy)	
 			
 			
-			blur = cv2.GaussianBlur(pitch_contour_output ,(5,5),10)
-			gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY);
-			#gray = blur
+			# blur = cv2.GaussianBlur(pitch_contour_output ,(5,5),10)
+			# gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY);
+			# #gray = blur
 			
 			
-			if(prevgray is not None):
-				#FRAME DIFFERENCING
+			# if(prevgray is not None):
+				# #FRAME DIFFERENCING
 				
 				
-				flow = cv2.calcOpticalFlowFarneback(prevgray, gray, 0.5, 3, 15, 3, 5, 1.2, 0)
-				# flow = cv2.calcOpticalFlowFarneback(prevgray, diff, 0.5, 3, 15, 3, 5, 1.2, 0)
-				cflow = cv2.cvtColor(prevgray, cv2.COLOR_GRAY2BGR);
-				optFlowMap = drawOptFlowMap(flow, cflow, 16, (0, 255, 0));
+				# flow = cv2.calcOpticalFlowFarneback(prevgray, gray, 0.5, 3, 15, 3, 5, 1.2, 0)
+				# # flow = cv2.calcOpticalFlowFarneback(prevgray, diff, 0.5, 3, 15, 3, 5, 1.2, 0)
+				# cflow = cv2.cvtColor(prevgray, cv2.COLOR_GRAY2BGR);
+				# optFlowMap = drawOptFlowMap(flow, cflow, 16, (0, 255, 0));
 				
 				
-				print datetime.datetime.now()
-				val = numpy.linalg.norm(numpy.sqrt((flow**2).sum(axis=-1)),1)
-				if val > 1000.0:
-					print 'note bend'
-				else:
-					val = 0
-					print 'not bend'
+				# print datetime.datetime.now()
+				# val = numpy.linalg.norm(numpy.sqrt((flow**2).sum(axis=-1)),1)
+				# if val > 1000.0:
+					# print 'note bend'
+				# else:
+					# val = 0
+					# print 'not bend'
 								
-				music = createA440(epsilon=val)
-				stream.write(music)	
+				# try:
+					# #get the centroid which is the first moment
+					# pitch_moments = cv2.moments(pitch_contours[pitch_maxind])
+					# pitch_centroid_x = int(pitch_moments['m10']/pitch_moments['m00'])
+					# pitch_centroid_y = int(pitch_moments['m01']/pitch_moments['m00'])
+					# cv2.circle(optFlowMap,(pitch_centroid_x,pitch_centroid_y),5,(255,255,255),8)
+				
+					# note_number = int(pitch_centroid_y/intervalSize)
+					# print 'note number', note_number
+					# music = createA440(epsilon=val,note = note_number)
+					# stream.write(music)					
+				# except:
+					# pass
 
-			# swap(prevgray, gray);
-			prevgray = gray
+
+			# # swap(prevgray, gray);
+			# prevgray = gray
 
 			
-			# // Documentation for drawing rectangle: http://docs.opencv.org/modules/core/doc/drawing_functions.html
-			# try:
-				# cv2.rectangle(pitch_contour_output, (boundrec[0],boundrec[1]), (boundrec[0]  + boundrec[2], boundrec[1] + boundrec[3]),(0,255,0),1, 8,0);
-				# cv2.rectangle(pitch_contour_output, (boundrec2[0],boundrec2[1]), (boundrec2[0]  + boundrec2[2], boundrec2[1] + boundrec2[3]),(0,255,0),1, 8,0);
-			# except:
-				# pass
+			# # // Documentation for drawing rectangle: http://docs.opencv.org/modules/core/doc/drawing_functions.html
+			# # try:
+				# # cv2.rectangle(pitch_contour_output, (boundrec[0],boundrec[1]), (boundrec[0]  + boundrec[2], boundrec[1] + boundrec[3]),(0,255,0),1, 8,0);
+				# # cv2.rectangle(pitch_contour_output, (boundrec2[0],boundrec2[1]), (boundrec2[0]  + boundrec2[2], boundrec2[1] + boundrec2[3]),(0,255,0),1, 8,0);
+			# # except:
+				# # pass
 					
-			#get the centroid which is the first moment
-			# pitch_moments = cv2.moments(pitch_contours[pitch_maxind])
-			# pitch_centroid_x = int(pitch_moments['m10']/pitch_moments['m00'])
-			# pitch_centroid_y = int(pitch_moments['m01']/pitch_moments['m00'])
-									
-			# cv2.circle(optFlowMap,(pitch_centroid_x,pitch_centroid_y),5,(255,255,255),8)
-			cv2.imshow("Optical Flow Map", optFlowMap);
 
 			
-		# lines spliting the right hand side into regions for the note values?
-		# cv2.line(frame,(0,intervalSize), (320,intervalSize), (255,255,255))
-		# cv2.line(frame,(0,intervalSize*2), (320,intervalSize*2), (255,255,255))
-		# cv2.line(frame,(0,intervalSize*3), (320,intervalSize*3), (255,255,255))
-		# cv2.line(frame,(0,intervalSize*4), (320,intervalSize*4), (255,255,255))
-		# cv2.line(frame,(0,intervalSize*5), (320,intervalSize*5), (255,255,255))
-		# cv2.line(frame,(0,intervalSize*6), (320,intervalSize*6), (255,255,255))
-		# cv2.line(frame,(0,intervalSize*7), (320,intervalSize*7), (255,255,255))
-		# cv2.line(frame,(0,intervalSize*8), (320,intervalSize*8), (255,255,255))
+		# # lines spliting the right hand side into regions for the note values?
+		# cv2.line(optFlowMap,(0,intervalSize), (320,intervalSize), (255,255,255))
+		# cv2.line(optFlowMap,(0,intervalSize*2), (320,intervalSize*2), (255,255,255))
+		# cv2.line(optFlowMap,(0,intervalSize*3), (320,intervalSize*3), (255,255,255))
+		# cv2.line(optFlowMap,(0,intervalSize*4), (320,intervalSize*4), (255,255,255))
+		# cv2.line(optFlowMap,(0,intervalSize*5), (320,intervalSize*5), (255,255,255))
+		# cv2.line(optFlowMap,(0,intervalSize*6), (320,intervalSize*6), (255,255,255))
+		# cv2.line(optFlowMap,(0,intervalSize*7), (320,intervalSize*7), (255,255,255))
+		# cv2.line(optFlowMap,(0,intervalSize*8), (320,intervalSize*8), (255,255,255))
+		# cv2.imshow("Optical Flow Map", optFlowMap);
+		
+		# #####################################################################################################
+		# #####################################################################################################
+		# ######################################################################################################
+		
 		if cv2.waitKey(1) & 0xFF == ord('q'):
 			break
 
