@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+	<title> CS585 Final Project </title>
+
+
+	 <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+
+	<!-- Optional theme -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+	
+</head>
+
+
+<body style="padding:40px;">
+
+	<div>
+		<center>
+			<a href="http://www.bu.edu"><img border="0" src="http://www.cs.bu.edu/fac/betke/images/bu-logo.gif" width="119" height="120"></a>
+		
+			<h1> Tying Computer Vision with Audio: An Attempt to Implement a Virtual Theremin</h1>
+			<p> 
+				Daniel Monahan, Sweekriti Satpathy, Shan Sikdar <br>
+				<h4> CS 585<h4/>
+				Fall 2014
+			</p>
+		</center>
+	
+	
+	add some pictures and photos here?
+	
+	
+	</div>
+
+
+	<div role="tabpanel">
+
+	  <!-- Nav tabs -->
+	  <ul class="nav nav-tabs" role="tablist">
+		<li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Introduction</a></li>
+		<li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Methods</a></li>
+		<li role="presentation"><a href="#messages" aria-controls="messages" role="tab" data-toggle="tab">Experiments and Results</a></li>
+		<li role="presentation"><a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Discussion of results and Conclusion</a></li>
+		<li role="presentation"><a href="#links" aria-controls="settings" role="tab" data-toggle="tab">Links</a></li>
+	  </ul>
+
+	  <!-- Tab panes -->
+	  <div class="tab-content">
+		<div role="tabpanel" class="tab-pane active" id="home">
+			<div>
+				<h3> General topic, motivation, background </h3>
+				
+				<p>
+					In the 1920s, a Russian physicist invented an instrument that was made up of two metal antennas that sensed the relative position of the user's hands. 
+					The instrument used oscillators to control frequency with one hand and amplitude with the other.
+				</p>
+				
+				<p>
+					Currently, hand gesture recognition is a common problem for Computer Vision. 
+					In our research, we found a few interesting papers related to hand gesture recognition.
+					Hand gesture recognition systems are used to help people such as the visually impaired or to help people in therapy. 
+					Solanki and Desai from Gujarat Technological University had even attempted to make a remote control for home appliances.
+					In Leeds Metropolitan University, a researcher had previously done gesture interaction for electronic music performance
+				</p>
+				
+				<p>
+					Our main motivation was to experiment with way to connect audio sounds with hand gesture recognition.
+					If we could connect hand gesture information to audio output, then this could add a new dimension to recognition systems. 
+					As well, it can be used in fields such as occupational therapy. We looked to the Theremin instrument for inspiration.
+					We found papers such as Svilen Dimitrov's "Analyzing Theremin Sounds for Touch Free Gesture Recognition", but often the methods suggested involved looking into systems and hardware.
+					We decided we wanted to implement a system that one could use with a simple web camera.
+				</p>
+			</div>
+			
+			<div>
+				<h3>Goal of the project </h3>
+				(Give a problem definition. Why is this an interesting and difficult problem?)
+				<p>
+					The goal of our project was to try and emulate the functionalities of the Theremin. 
+					This involved sub-problems of being able to control volume with one hand and controlling pitch with the other. 
+				</p>
+				
+			</div>
+
+		</div>
+		<div role="tabpanel" class="tab-pane" id="profile">
+			Methods (based on material from class, the literature, or on your own ideas)
+		</div>
+		
+		<div role="tabpanel" class="tab-pane" id="messages">
+			Experiments
+			Results
+		</div>
+		<div role="tabpanel" class="tab-pane" id="settings">
+			Discussion of results (Is the method successful? Are your results satisfactory? What are the limitations of the method used? Did you improve on the state-of-the-art? Give a critical evaluation.)
+			Conclusions.
+		</div>
+		
+		<div role="tabpanel" class="tab-pane" id="links">
+			http://en.wikipedia.org/wiki/Theremin
+			http://www.utpalsolanki.com/project/project3/P1.pdf
+			http://davywybiral.blogspot.com/2010/09/procedural-music-with-pyaudio-and-numpy.html
+			http://stackoverflow.com/questions/9235368/realtime-sound-synthesizer-from-a-varying-input-in-python
+			http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowfarneback
+
+		</div>
+	  </div>
+
+	</div>
+</body>
+</html>
