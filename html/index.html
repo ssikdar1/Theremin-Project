@@ -237,13 +237,46 @@
 			Results
 		</div>
 		<div role="tabpanel" class="tab-pane" id="settings">
-			Discussion of results (Is the method successful? Are your results satisfactory? What are the limitations of the method used? Did you improve on the state-of-the-art? Give a critical evaluation.)
-			Conclusions.
+			<!--  (Is the method successful? Are your results satisfactory? What are the limitations of the method used? Did you improve on the state-of-the-art? Give a critical evaluation.)
+			Conclusions. -->
+			<h3>Discussion of results</h3>
+			
+			<p>
+			Overall each component of the Theremin individually was pretty successful. 
+			A few equations like the amplitude and flow could be fine-tuned but for the most part work really well. 
+			The volume pans in and out, the vibrato responds to hand movements, and the pitch can change based on the height of the left hand. 
+			All of this works on a simple laptop web camera. While it does not improve on the state of the art based on the paper we read, it also
+			does not require new hardware. In this respect we think our code is a success. 
+			</p>
+			
+			<p>
+				While the Theremin itself might not be directly applicable, individual parts with their audio counterparts could be used for other applications. 
+				For instance the optical flow gesture recognition could be used to quantify body movement.
+				Moments and centroid location could be further used to play a warning sound if a hand or another object is leaving an important part of the camera view. 
+			</p>
+			
+			<p>
+				The parts all together don’t work very well, the application becomes too slow. 
+				The vibrato and pitch components also currently require different time length in order to hear the different effects. 
+				As a result the code works if you run each part separately. 
+				The audio streaming also has gaps in the stream so the virtual Theremin doesn’t really sound like a continuous instrument. 
+				However this could also be fixed by using a sound mimicking an instrument that needs to be plucked (e.g. guitar)
+			</p>
+			
+			<p>
+				After doing some research, we realized that that the best way to fix all these problems would probably to turn this into a concurrent application by using threads. 
+				This would mean that the audio stream and a few variables would have to be shared resources requiring mutexes and locks. Due to time constraints and not wanting to crash the project before the demo, we have decided to not implement the concurrent part of this application. 
+				However the code is structured in such a way that converting to a concurrent style should not be problematic at all. 
+			</p>
+			<h3>Conclusions </h3>
+			
 		</div>
 		
 		<div role="tabpanel" class="tab-pane" id="links">
 			<div>
 				github: <a href="https://github.com/ssikdar1/Theremin-Project"> https://github.com/ssikdar1/Theremin-Project </a> <br/>
+				<br/>
+				<br/>
 				references: <br/>
 				<a href="http://en.wikipedia.org/wiki/Theremin"> http://en.wikipedia.org/wiki/Theremin </a> <br/>
 				<a href="http://www.utpalsolanki.com/project/project3/P1.pdf"> http://www.utpalsolanki.com/project/project3/P1.pdf </a> <br/>
