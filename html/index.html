@@ -204,10 +204,31 @@
 				This was important because when we tried to implement it ourselves its was slowing down the system too much.
 			</p>
 			
-			<h4>From Optical Flow to Actual Vibrato</h4>
+			<h4>From Optical Flow to Actual Vibrato: Using a Low Frequency Oscillator</h4>
 			<p>
-			
+				Using the l2 norm to obtain a quantification of the optical flow matrix proved to be helpful. In the cases that the hand was stationary, the norm value was
+				very low always below a 1000. In the case of hand movement the norm quickly spiked up to over 1000. Using this as a detection of a hand gesture for vibrato
+				we now needed a way to turn this value into an actual sound.
+				
+				NEED TO ADD INFORMATION OF LFO HERE
 			</p>
+			
+			<h4>Pitch Dectection</h4>
+			
+			<p>
+				For pitch detection we decided to we would like the position of the pitch hand to be able to loosely recreate the pictches from the blues scale.
+				We found the frequencies for all six notes in the C blues scale: 261.63,311.13,349.23,269.99,392.0,440.0,466.16,523.25. These values were then put into
+				an array. Then the centroid of the pitch hand was discovered similar to volume hand process listed up above. The pitch image was then subdivided into interval regions
+				based on the number of notes in the scale.The relative postion of the centroid divided by the interval size gave which index in the array of notes to access.
+				The value was then passed on to a function to create a sin wave of the given note frequency. The return value of this function was then fed to the PyAudio Stream.
+
+				<BR/>
+				CODE OR PICTURES OR EQUATIONS HERE
+			</p>
+			
+			<div>
+				<img alt="" src="img/Blues_scale_hexatonic_C.png" width="400" height="86" class="thumbimage"  data-file-width="1043" data-file-height="225">
+			</div>
 			
 		</div>
 		
@@ -227,15 +248,12 @@
 				<a href="http://en.wikipedia.org/wiki/Theremin"> http://en.wikipedia.org/wiki/Theremin </a> <br/>
 				<a href="http://www.utpalsolanki.com/project/project3/P1.pdf"> http://www.utpalsolanki.com/project/project3/P1.pdf </a> <br/>
 				<a href="http://davywybiral.blogspot.com/2010/09/procedural-music-with-pyaudio-and-numpy.html"> http://davywybiral.blogspot.com/2010/09/procedural-music-with-pyaudio-and-numpy.html </a> <br/>
-			
-			
-			
-			http://stackoverflow.com/questions/9235368/realtime-sound-synthesizer-from-a-varying-input-in-python
-			http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowfarneback
-			ttp://cfile7.uf.tistory.com/attach/210E193853E08FC026EDA4
-			http://en.wikipedia.org/wiki/Operator_norm
-			http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.norm.html
-			Introduction to compressive Sensing
+				<a href="http://stackoverflow.com/questions/9235368/realtime-sound-synthesizer-from-a-varying-input-in-python"> http://stackoverflow.com/questions/9235368/realtime-sound-synthesizer-from-a-varying-input-in-python </a> <br/>
+				<a href="http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowfarneback"> http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowfarneback </a> <br/>
+				<a href="ttp://cfile7.uf.tistory.com/attach/210E193853E08FC026EDA4"> ttp://cfile7.uf.tistory.com/attach/210E193853E08FC026EDA4 </a> <br/>
+				<a href="http://en.wikipedia.org/wiki/Operator_norm"> http://en.wikipedia.org/wiki/Operator_norm</a> <br/>
+				<a href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.norm.html"> http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.norm.html</a> <br/>	
+				Introduction to compressive Sensing
 			</div>
 		</div>
 	  </div>
