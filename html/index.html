@@ -18,6 +18,8 @@
 	<!-- Latest compiled and minified JavaScript -->
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
 	
+	<script type="text/javascript" src="http://latex.codecogs.com/latexit.js"></script>
+	
 </head>
 
 
@@ -83,17 +85,130 @@
 			
 			<div>
 				<h3>Goal of the project </h3>
-				(Give a problem definition. Why is this an interesting and difficult problem?)
 				<p>
 					The goal of our project was to try and emulate the functionalities of the Theremin. 
 					This involved sub-problems of being able to control volume with one hand and controlling pitch with the other. 
+					The video version of this “Theremin Problem” is an interesting problem because there is a loss of information since a simple web camera does not contain information about the z-axis. 
+					A real Theremin can use oscillators to track the user’s hands in all three dimensions. However, a simple camera does not have any information on depth. 
+					A virtual Theremin also has to account for possible inaccuracies in hand position detection, hand movement detection, changes in lighting, and changes in the background. 
+					Furthermore, after processing all visual data, a virtual Theremin needs to somehow use that information to reliably reflect a change in audio output.
+
 				</p>
 				
 			</div>
 
 		</div>
 		<div role="tabpanel" class="tab-pane" id="profile">
-			Methods (based on material from class, the literature, or on your own ideas)
+			<h3> Methods </h3>
+			
+			<h3> Quick Audio Introduction </h3>
+			<p>
+				For audio we decided to use a python library called pyAudio. 
+				Using this library one could open a stream. If audio input is put into the stream, the library automatically plays input segment.
+				
+				sample code of just playing any audio: <br/>
+			</p>
+			
+			<pre>
+			<code>
+				p = pyaudio.PyAudio()
+				stream = p.open(format=p.get_format_from_width(2),
+					channels=1,
+					rate=44100,
+					output=True)
+				input = createA440(epsilon=0,note=0)
+				stream.write(input)
+			</code>
+			</pre>
+			
+			<h3> Trying to get the correct information to pass to the Audio </h3>
+			<p>
+				Before we could output any sound, we first needed to be able to segment the hands. 
+				To do this, we decided to use hand segmentation using skin detection which is a method similar to the one used in the hand gesture homework earlier this semester. 
+				To make processing of the image more manageable, the image was split in half down the center into two separate images.
+			</p>
+			
+			<h3> Volume </h3>
+			<p>
+				The first half of the image was used to control the volume of the audio. 
+				The segment was then iterated through pixel by pixel. For each pixel, the RGB values were taken and thresholding was performed on their values based for skin detection. 
+				This resulted in a grayscale image, and the contours of the grayscale image were obtained using the opencv findContours function.
+			</p>
+			
+			<p>
+				A function was then written to iterate through all contours in order to find the one with the largest contour. 
+				The largest contour was then taken to be the left hand. We also decided that the centroid of the contour would be the best data to be used in controlling the volume. 
+				We also played around with the geometry of the bounding box and other geometries based on the convex hull and defect points but these proved to be not useful.
+				
+				To get the centroid we first got the moments and then used the equation found in papers and in class:
+			</p>
+			
+			<div lang="latex">
+				x_c = \frac{m_{1,0}}{m_{0,0}}				
+			</div>
+			<br/>
+			<div lang="latex">
+				y_c = \frac{m_{0,1}}{m_{0,0}}
+			</div>
+			
+			Where m{0,0} are the zero order moments and m {0,1}/{1,0} are the first order moments.
+			
+			<h4> Tying in Volume with Audio </h4>
+			<p>
+			Once the centroid was obtained we took its relative postion in the image and passed that ratio into a logmarthimic function similar to 
+			the decibel scale to create a smooth transition in volume as a hand moved up and down on the screen. Several equations were experimented with but the one
+			shown below worked the best.
+			</p>
+			<div lang="latex">
+				s = log_{10}(10*log_{10}(\frac{rows}{y_c}))
+			</div>			
+			
+			<p>
+				From there we used the value s, to scale all the amplitudes in the frame. A downsampled A note was created at 440 hertz. Then the music sample and the value s, were 
+				passed to a function that unpakced the music data, mulitiplied everything by the scale factor s and then repacked to a music data array. After that the array was then
+				fed into the music stream.
+			</p>
+			
+			<h3> Trying to get vision infomration for pitch and vibrato </h3>
+			
+			<h4> Optical Flow Method </h4>
+			<p>
+				To be able to detect a vibrato gesture from the hand we decided to use optical flow. 
+				For the optical flow function we decided to use Farneback's optical flow algorithm as shown to us in lab. 
+				We tried experimenting by using optical flow on many different input images. We first tried on a normal grayscale image but the numbers were varying wildly and changes in lighting and people moving in the background. We then tried using optical flow on a skin detected image. This worked a little better, but was still catching way to much extraneous information in the background. 
+				As a result we decided to use Gaussian Blur to see if we could smooth out the differences in lighting. We finally found the largest contour of the pitch hand and limited the optical flow change to the region around the contour. This had the best performance of all. (Pictures to be shown in the Experiments and Results) section.
+			</p>
+			
+			<h4>Operator Norm for Optical Flow</h4>
+			<p>
+				The optical flow matrix we had was essentially a map of all flow vector for a given image. 
+				We had a matrix the size of the image with each entry as a vector corresponding to the optical flow for that pixel. 
+				We needed some way to get from this matrix to some actual numerical value to vibrato by. 
+				After doing some research we felt that taking the operator norm of the optical flow matrix was best.
+				The operator norm is used often in engineering and applied mathematics to measure the size of linear operators. 
+				The formal definition of the operator norm from Wikipedia is the following
+			</p>
+			
+			<div lang="latex">
+				||\norm{A}||_{op} = \text{inf} \ \{ c \geq 0 : ||Av|| \leq c ||v|| \forall v \in V \}
+			</div>			
+			
+			<p>
+				Where the norm in both the domain and codomian can be specifed seperately.
+			</p>
+			
+			<p>
+				We first took the optical flow matrix and for every entry computed the l2 norm of every vector, to create a new matrix. 
+				We then experimented with different norms but finally decided to use the l2 norm. Which is also equivelent of finding the maximum singular value 
+				for the matrix (wikipedia and Introduction to Compressive Sensing by Holdger). Python's numpy library fortunately provides an norm function which is an optimized code to take the opertor norm.
+				This was important because when we tried to implement it ourselves its was slowing down the system too much.
+			</p>
+			
+			<h4>From Optical Flow to Actual Vibrato</h4>
+			<p>
+			
+			</p>
+			
 		</div>
 		
 		<div role="tabpanel" class="tab-pane" id="messages">
@@ -106,12 +221,22 @@
 		</div>
 		
 		<div role="tabpanel" class="tab-pane" id="links">
-			http://en.wikipedia.org/wiki/Theremin
-			http://www.utpalsolanki.com/project/project3/P1.pdf
-			http://davywybiral.blogspot.com/2010/09/procedural-music-with-pyaudio-and-numpy.html
+			<div>
+				github: <a href="https://github.com/ssikdar1/Theremin-Project"> https://github.com/ssikdar1/Theremin-Project </a> <br/>
+				references: <br/>
+				<a href="http://en.wikipedia.org/wiki/Theremin"> http://en.wikipedia.org/wiki/Theremin </a> <br/>
+				<a href="http://www.utpalsolanki.com/project/project3/P1.pdf"> http://www.utpalsolanki.com/project/project3/P1.pdf </a> <br/>
+				<a href="http://davywybiral.blogspot.com/2010/09/procedural-music-with-pyaudio-and-numpy.html"> http://davywybiral.blogspot.com/2010/09/procedural-music-with-pyaudio-and-numpy.html </a> <br/>
+			
+			
+			
 			http://stackoverflow.com/questions/9235368/realtime-sound-synthesizer-from-a-varying-input-in-python
 			http://docs.opencv.org/modules/video/doc/motion_analysis_and_object_tracking.html#calcopticalflowfarneback
-
+			ttp://cfile7.uf.tistory.com/attach/210E193853E08FC026EDA4
+			http://en.wikipedia.org/wiki/Operator_norm
+			http://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.norm.html
+			Introduction to compressive Sensing
+			</div>
 		</div>
 	  </div>
 
