@@ -36,7 +36,7 @@ def createA440(epsilon, note):
 	sampleRate = 44100/4				#downsampling 
 	# MAX_AMP = 2**(8*sampleWidth - 1) - 1 #maximum amplitude is 2**15 - 1  = 32767 
 	MAX_AMP = 2**(8*sampleWidth - 1) - 1 #maximum amplitude is 2**15 - 1  = 32767 
-	lengthSeconds = 1           
+	lengthSeconds = .4           
 	numSamples = int(sampleRate * lengthSeconds)
 	data = array.array("h")
 
@@ -206,9 +206,9 @@ def main():
 			######################################################
 			#####################################################
 			
-			#
-			# PITCH HAND
-			#
+			# #
+			# # PITCH HAND
+			# #
 			
 
 			# OPTICAL FLOW
@@ -257,11 +257,14 @@ def main():
 				
 				print datetime.datetime.now()
 				val = numpy.linalg.norm(numpy.sqrt((flow**2).sum(axis=-1)),1)
-				if val > 1000.0:
-					print 'note bend'
-				else:
-					val = 0
-					print 'not bend'
+				
+				print ('Optical Flow Value',val)
+				
+				# if val > 1000.0:
+					# print 'note bend'
+				# else:
+					# val = 0
+					# print 'not bend'
 								
 				try:
 					#get the centroid which is the first moment

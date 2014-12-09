@@ -38,7 +38,6 @@
 		</center>
 	
 	
-	add some pictures and photos here?
 	
 	
 	</div>
@@ -65,6 +64,8 @@
 					In the 1920s, a Russian physicist invented an instrument that was made up of two metal antennas that sensed the relative position of the user's hands. 
 					The instrument used oscillators to control frequency with one hand and amplitude with the other.
 				</p>
+				<img alt="" src="img/download.jpe" width="250" height="250" class="thumbimage" data-file-width="1043" data-file-height="225">
+				<img alt="" src="img/Etherwave_Theremin_Kit.jpg" width="250" height="250" class="thumbimage" data-file-width="1043" data-file-height="225">
 				
 				<p>
 					Currently, hand gesture recognition is a common problem for Computer Vision. 
@@ -75,9 +76,9 @@
 				</p>
 				
 				<p>
-					Our main motivation was to experiment with way to connect audio sounds with hand gesture recognition.
+					Our main motivation was to experiment with ways to connect audio sounds with hand gesture recognition.
 					If we could connect hand gesture information to audio output, then this could add a new dimension to recognition systems. 
-					As well, it can be used in fields such as occupational therapy. We looked to the Theremin instrument for inspiration.
+					It could also be used in fields such as occupational therapy, or to create systems to help the visually impaired. We looked to the Theremin as a source of inspiration.
 					We found papers such as Svilen Dimitrov's "Analyzing Theremin Sounds for Touch Free Gesture Recognition", but often the methods suggested involved looking into systems and hardware.
 					We decided we wanted to implement a system that one could use with a simple web camera.
 				</p>
@@ -88,8 +89,8 @@
 				<p>
 					The goal of our project was to try and emulate the functionalities of the Theremin. 
 					This involved sub-problems of being able to control volume with one hand and controlling pitch with the other. 
-					The video version of this “Theremin Problem” is an interesting problem because there is a loss of information since a simple web camera does not contain information about the z-axis. 
-					A real Theremin can use oscillators to track the user’s hands in all three dimensions. However, a simple camera does not have any information on depth. 
+					The video version of this "Theremin Problem" is an interesting problem because there is a loss of information since a simple web camera does not contain information about the z-axis. 
+					A real Theremin can use oscillators to track the user's hands in all three dimensions. However, a simple camera does not have any information on depth. 
 					A virtual Theremin also has to account for possible inaccuracies in hand position detection, hand movement detection, changes in lighting, and changes in the background. 
 					Furthermore, after processing all visual data, a virtual Theremin needs to somehow use that information to reliably reflect a change in audio output.
 
@@ -103,10 +104,10 @@
 			
 			<h3> Quick Audio Introduction </h3>
 			<p>
-				For audio we decided to use a python library called pyAudio. 
-				Using this library one could open a stream. If audio input is put into the stream, the library automatically plays input segment.
-				
-				sample code of just playing any audio: <br/>
+				We decided to use a python library called pyAudio. 
+				We used this library to open an audio stream . Any audio segement that is fed into the stream, the library automatically plays the segment through the computer's audio card.
+				<br/>
+				Sample code of just playing any audio: <br/>
 			</p>
 			
 			<pre>
@@ -121,10 +122,13 @@
 			</code>
 			</pre>
 			
+			<p> 
+				To actually generate the audio we wished to play, we generate a sine wave of the appropriate frequency (by default 440Hz, concert A). To ensure the audio plays for long enough, we generate the sine wave over a number of samples, which is user defined.
+
 			<h3> Trying to get the correct information to pass to the Audio </h3>
 			<p>
 				Before we could output any sound, we first needed to be able to segment the hands. 
-				To do this, we decided to use hand segmentation using skin detection which is a method similar to the one used in the hand gesture homework earlier this semester. 
+				To do this, we utilized hand segmentation via skin detection similar to the method used in the hand gesture homework earlier this semester. 
 				To make processing of the image more manageable, the image was split in half down the center into two separate images.
 			</p>
 			
@@ -137,8 +141,8 @@
 			
 			<p>
 				A function was then written to iterate through all contours in order to find the one with the largest contour. 
-				The largest contour was then taken to be the left hand. We also decided that the centroid of the contour would be the best data to be used in controlling the volume. 
-				We also played around with the geometry of the bounding box and other geometries based on the convex hull and defect points but these proved to be not useful.
+				The largest contour was then taken to be the left hand. We decided that the centroid of the contour would be the best data to be used in controlling the volume. 
+				(We also played around with the geometry of the bounding box and other geometries based on the convex hull and defect points but these proved to be not useful.)
 				
 				To get the centroid we first got the moments and then used the equation found in papers and in class:
 			</p>
@@ -181,12 +185,12 @@
 			
 			<h4>Operator Norm for Optical Flow</h4>
 			<p>
-				The optical flow matrix we had was essentially a map of all flow vector for a given image. 
+				The optical flow matrix returned by the Farneback's optical flow algorithm was essentially a matrix of all flow vectors for the given image. 
 				We had a matrix the size of the image with each entry as a vector corresponding to the optical flow for that pixel. 
-				We needed some way to get from this matrix to some actual numerical value to vibrato by. 
+				We needed some way to get from this matrix to some actual numerical value in order to be able to create the vibrato. 
 				After doing some research we felt that taking the operator norm of the optical flow matrix was best.
 				The operator norm is used often in engineering and applied mathematics to measure the size of linear operators. 
-				The formal definition of the operator norm from Wikipedia is the following
+				The formal definition of the operator norm from Wikipedia is the following:
 			</p>
 			
 			<div lang="latex">
@@ -200,17 +204,22 @@
 			<p>
 				We first took the optical flow matrix and for every entry computed the l2 norm of every vector, to create a new matrix. 
 				We then experimented with different norms but finally decided to use the l2 norm. Which is also equivelent of finding the maximum singular value 
-				for the matrix (wikipedia and Introduction to Compressive Sensing by Holdger). Python's numpy library fortunately provides an norm function which is an optimized code to take the opertor norm.
-				This was important because when we tried to implement it ourselves its was slowing down the system too much.
+				for the matrix (wikipedia and Introduction to Compressive Sensing by Holdger). Python's numpy library fortunately provides an optimized norm function.
+				This was important because when we tried to implement it ourselves, the code was slowing down the overall program too much.
 			</p>
 			
 			<h4>From Optical Flow to Actual Vibrato: Using a Low Frequency Oscillator</h4>
 			<p>
+					Vibrato is the musical term for a regular, slight change in pitch of a sound. For instance, violinists will slightly move their finger back and forth on the string to acheive the vibrato effect. This effect is an important addition to music, as it gives a more life-like quality to the sound.
+			</p>
+			<p>
+
 				Using the l2 norm to obtain a quantification of the optical flow matrix proved to be helpful. In the cases that the hand was stationary, the norm value was
 				very low always below a 1000. In the case of hand movement the norm quickly spiked up to over 1000. Using this as a detection of a hand gesture for vibrato
-				we now needed a way to turn this value into an actual sound.
-				
-				NEED TO ADD INFORMATION OF LFO HERE
+				we now needed a way to turn this value into an actual vibrato sound.
+			</p>
+			<p>	
+				To acheive the vibrato effect, we used a low frequency oscillator (LFO). An LFO is an oscillator with a frequency usually below the range of human hearing, so about 20 Hz or less. To achieve vibrato, the LFO is applied to the frequency of the actual audio wave we are generating. We first create the LFO as a simple sine wave with a frequency of around 2 Hz. To get varying levels of vibrato, we multiply it by the l2 norm we generated from our optical flow (normalized to a value that makes sense for the current pitch). We then add it to the frequency parameter for the audio sine wave, resulting in a vibrato effect.
 			</p>
 			
 			<h4>Pitch Dectection</h4>
@@ -223,7 +232,7 @@
 				The value was then passed on to a function to create a sin wave of the given note frequency. The return value of this function was then fed to the PyAudio Stream.
 
 				<BR/>
-				CODE OR PICTURES OR EQUATIONS HERE
+				
 			</p>
 			
 			<div>
@@ -233,8 +242,18 @@
 		</div>
 		
 		<div role="tabpanel" class="tab-pane" id="messages">
-			Experiments
-			Results
+			Overall our experiments worked really well. Below are sample video clips of different portions of our code running. The program runs especially well
+			when the user is wearing full sleves, although changing light conditions have given varied results.
+
+			<h2> Volume control </h2> 
+			<iframe width="560" height="315" src="http://www.youtube.com/embed/LdunSEF2Vmc" frameborder="0" allowfullscreen></iframe>
+
+			<h2> Note Control </h2>
+			<iframe width="560" height="315" src="http://www.youtube.com/embed/o-VwGAGbrvI" frameborder="0" allowfullscreen></iframe>
+
+			<h2> Vibrato use </h2>
+			<iframe width="560" height="315" src="http://www.youtube.com/embed/rILd9Qmcd4M" frameborder="0" allowfullscreen></iframe>
+
 		</div>
 		<div role="tabpanel" class="tab-pane" id="settings">
 			<!--  (Is the method successful? Are your results satisfactory? What are the limitations of the method used? Did you improve on the state-of-the-art? Give a critical evaluation.)
@@ -265,10 +284,19 @@
 			
 			<p>
 				After doing some research, we realized that that the best way to fix all these problems would probably to turn this into a concurrent application by using threads. 
-				This would mean that the audio stream and a few variables would have to be shared resources requiring mutexes and locks. Due to time constraints and not wanting to crash the project before the demo, we have decided to not implement the concurrent part of this application. 
+				This would mean that the audio stream and a few variables would have to be shared resources requiring mutexes and locks. We would also possibly need to implement a client/server model with a circular buffer as well. Due to time constraints and not wanting to crash the project before the demo, we have decided to not implement the concurrent part of this application. 
 				However the code is structured in such a way that converting to a concurrent style should not be problematic at all. 
 			</p>
 			<h3>Conclusions </h3>
+			<h4> Future Improvements </h4>
+			 <p>
+				 Our system has its strengths, but also falls short in some ways of what we hoped for. The system currently generates sound in short intervals, with each successive change interrupting the playing sound. The result is a series of beeps that change pitch and volume, rather than a continous stream of audio. We discovered that continous, real-time audio synthesis is a difficult problem which could possibly be improved upon with more time and development, possibly with research into existing methods. 
+			 </p>
+
+			 <h4> Results Evaluation </h4>
+			 <p>
+				 While our system has its shortcomings, it also is a good first step into a computer vision based audio system. We were able to successfully tie the volume and pitch of the generated sound to the position of an object in the image, as well as tie the amount of vibrato to the amount of motion occuring. These are significant results, that can be adapted for many other uses, such as systems for the visually impaired. In addition, further development could result in other types of sounds and gestures for other vision based electronic instruments.
+			 </p>
 			
 		</div>
 		
