@@ -23,7 +23,6 @@ def adjustAmplitude(data,ampScale):
 	# Edit
 	data_array = data_array * ampScale  # scale * amplitude
 	data = pack('h'*len(data_array), *data_array)
-
 	return data
 
 def createA440(epsilon, note):
