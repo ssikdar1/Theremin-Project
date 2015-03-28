@@ -53,14 +53,17 @@ class ProducerThread(threading.Thread):
 				# Capture frame-by-frame
 				ret, frame = cap.read()
 				halves = numpy.hsplit(frame,2)
+
+				### PITCH
 				
+				### VOLUME
 				vol_contours, vol_hierarchy = cv2.findContours(numpy.copy( videolib.skinDetection(halves[0])),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 				vol_maxsize, vol_maxind, vol_boundrect = videolib.findLargestContour(vol_contours)
 				#get and draw centroid
 				vol_centerX, vol_centerY =  videolib.getCentroid(vol_contours, vol_maxind)
 				scale = log10(10*log10(float(rows)/vol_centerY))
-				ret = audiolib.adjustAmplitude(numpy.copy(input),scale-.4)
-				music_buffer.put(segment)
+				ret = audiolib.adjustAmplitude(numpy.copy(segment),scale-.4)
+				music_buffer.put(ret)
 			except Exception, e:
 				print ("Producer")
 				print str(e);
@@ -106,7 +109,8 @@ if __name__ == '__main__':
 	while (running):
 	
 		try:
-			continue
+			ret, frame = cap.read()
+			cv2.imshow('volume skin',frame)
 		except KeyboardInterrupt:
 			print "Ctrl-c received! Sending kill to threads..."        
 			producerThread.join()
