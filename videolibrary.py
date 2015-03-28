@@ -1,7 +1,8 @@
 import cv2
+import numpy 
 
 class VideoLibrary:
-	def skinDetection(src):
+	def skinDetection(self,src):
 		""" TODO optimize 
 			http://opencvpython.blogspot.com/2012/06/fast-array-manipulation-in-numpy.html
 			-Also fix this so its returning a grayscale
@@ -25,7 +26,7 @@ class VideoLibrary:
 		return dst
 
 		
-	def findLargestContour(contours):
+	def findLargestContour(self,contours):
 		maxsize = 0
 		maxind = 0
 		boundrec = None
@@ -39,14 +40,14 @@ class VideoLibrary:
 				boundrec = cv2.boundingRect(contours[i])
 		return maxsize,maxind,boundrec
 
-	def getCentroid(contours,maxind):
+	def getCentroid(self,contours,maxind):
 		#get the centroid which is the first moment
 		moments = cv2.moments(contours[maxind])
 		centroid_x = int(moments['m10']/moments['m00'])
 		centroid_y = int(moments['m01']/moments['m00'])
 		return centroid_x, centroid_y
 		
-	def drawOptFlowMap(flow, cflowmap, step, color):
+	def drawOptFlowMap(self,flow, cflowmap, step, color):
 		y = 0
 		x = 0
 		cols, rows, dim = original_shape = tuple(cflowmap.shape)
